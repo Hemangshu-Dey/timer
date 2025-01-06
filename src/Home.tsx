@@ -11,10 +11,10 @@ function Home() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Toaster position="top-right" />
       <div className="container mx-auto px-4 py-8">
-        <div>
+        <div className="flex justify-between">
           <div className="flex items-center gap-3">
             <Clock className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Timer</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Timer App</h1>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
