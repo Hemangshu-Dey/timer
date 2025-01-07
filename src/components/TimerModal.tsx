@@ -4,13 +4,16 @@ import { useTimerStore } from "../store/useTimerStore";
 import { validateTimerForm } from "../utils/validation";
 import { Timer } from "../types/timer";
 import { Button } from "./Buttons";
-import { toast } from "sonner";
+import { toast, ToasterProps } from "sonner";
 
 interface TimerModalProps {
   isOpen: boolean;
   onClose: () => void;
   timer?: Timer;
 }
+
+const MOBILE_BREAKPOINT = 768;
+
 export const TimerModal: React.FC<TimerModalProps> = ({
   isOpen,
   onClose,
@@ -32,7 +35,27 @@ export const TimerModal: React.FC<TimerModalProps> = ({
     minutes: false,
     seconds: false,
   });
+  const [toastPosition, setToastPosition] =
+    useState<ToasterProps["position"]>("top-right");
+
   const { addTimer, editTimer } = useTimerStore();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setToastPosition(
+        window.innerWidth < MOBILE_BREAKPOINT ? "bottom-center" : "top-right"
+      );
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   useEffect(() => {
     if (isOpen && timer) {
       setTitle(timer.title);
@@ -54,7 +77,15 @@ export const TimerModal: React.FC<TimerModalProps> = ({
       seconds: false,
     });
   }, [isOpen, timer]);
+
   if (!isOpen) return null;
+
+  const showError = (message: string) => {
+    toast.error(message, {
+      position: toastPosition,
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -64,21 +95,21 @@ export const TimerModal: React.FC<TimerModalProps> = ({
       minutes: true,
       seconds: true,
     });
-
     const isTimeValid = hours > 0 || minutes > 0 || seconds > 0;
     const isTitleValid = title.trim().length > 0 && title.length <= 50;
 
     if (!isTitleValid || !isTimeValid) {
       if (!isTitleValid) {
-        toast.error("Please enter a valid title (1-50 characters)");
-      } else {
-        toast.error("Please set a duration greater than 0");
+        showError("Please enter a valid title (1-50 characters)");
+      }
+      if (!isTimeValid) {
+        showError("Please set a duration greater than 0");
       }
       return;
     }
 
     if (!validateTimerForm({ title, description, hours, minutes, seconds })) {
-      toast.error("Please check all fields and try again");
+      showError("Please check all fields and try again");
       return;
     }
 
@@ -214,7 +245,7 @@ export const TimerModal: React.FC<TimerModalProps> = ({
                     setSeconds(Math.min(59, parseInt(e.target.value) || 0))
                   }
                   onBlur={() => setTouched({ ...touched, seconds: true })}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&:--webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
                 />
               </div>
             </div>
