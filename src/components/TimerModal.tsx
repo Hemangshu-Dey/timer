@@ -4,13 +4,13 @@ import { useTimerStore } from "../store/useTimerStore";
 import { validateTimerForm } from "../utils/validation";
 import { Timer } from "../types/timer";
 import { Button } from "./Buttons";
+import { toast } from "sonner";
 
 interface TimerModalProps {
   isOpen: boolean;
   onClose: () => void;
   timer?: Timer;
 }
-
 export const TimerModal: React.FC<TimerModalProps> = ({
   isOpen,
   onClose,
@@ -32,9 +32,7 @@ export const TimerModal: React.FC<TimerModalProps> = ({
     minutes: false,
     seconds: false,
   });
-
   const { addTimer, editTimer } = useTimerStore();
-
   useEffect(() => {
     if (isOpen && timer) {
       setTitle(timer.title);
@@ -56,18 +54,35 @@ export const TimerModal: React.FC<TimerModalProps> = ({
       seconds: false,
     });
   }, [isOpen, timer]);
-
   if (!isOpen) return null;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    setTouched({
+      title: true,
+      hours: true,
+      minutes: true,
+      seconds: true,
+    });
+
+    const isTimeValid = hours > 0 || minutes > 0 || seconds > 0;
+    const isTitleValid = title.trim().length > 0 && title.length <= 50;
+
+    if (!isTitleValid || !isTimeValid) {
+      if (!isTitleValid) {
+        toast.error("Please enter a valid title (1-50 characters)");
+      } else {
+        toast.error("Please set a duration greater than 0");
+      }
+      return;
+    }
+
     if (!validateTimerForm({ title, description, hours, minutes, seconds })) {
+      toast.error("Please check all fields and try again");
       return;
     }
 
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-
     if (isEditMode && timer) {
       editTimer(timer.id, {
         title: title.trim(),
@@ -83,10 +98,8 @@ export const TimerModal: React.FC<TimerModalProps> = ({
         isRunning: false,
       });
     }
-
     onClose();
   };
-
   const handleClose = () => {
     onClose();
     setTouched({
@@ -112,7 +125,6 @@ export const TimerModal: React.FC<TimerModalProps> = ({
             <X className="w-5 h-5" />
           </Button>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -140,7 +152,6 @@ export const TimerModal: React.FC<TimerModalProps> = ({
               {title.length}/50 characters
             </p>
           </div>
-
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Description
@@ -153,7 +164,6 @@ export const TimerModal: React.FC<TimerModalProps> = ({
               placeholder="Enter timer description (optional)"
             />
           </div>
-
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-3">
               Duration <span className="text-red-500">*</span>
@@ -217,12 +227,11 @@ export const TimerModal: React.FC<TimerModalProps> = ({
                 </p>
               )}
           </div>
-
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button type="button" variant="secondary" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!isTitleValid || !isTimeValid}>
+            <Button type="submit">
               {isEditMode ? "Save Changes" : "Add Timer"}
             </Button>
           </div>
