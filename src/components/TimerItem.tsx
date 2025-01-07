@@ -28,13 +28,15 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
         setRemainingTime((prevTime) => {
           if (prevTime <= 1 && !hasEndedRef.current) {
             hasEndedRef.current = true;
-            timerAudio.play().catch(console.error);
+            timerAudio.playLoop(timer.id).catch(console.error);
 
             toast.success(`Timer "${timer.title}" has ended!`, {
-              duration: 5000,
+              duration: Infinity,
               action: {
                 label: "Dismiss",
-                onClick: timerAudio.stop,
+                onClick: () => {
+                  timerAudio.stop(timer.id);
+                },
               },
             });
             setIsRunning(false);
@@ -46,7 +48,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
     }
 
     return () => clearInterval(intervalRef.current!);
-  }, [isRunning, timer.title, timerAudio]);
+  }, [isRunning, timer.title, timer.id, timerAudio]);
 
   const handleRestart = () => {
     hasEndedRef.current = false;
@@ -56,7 +58,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
   };
 
   const handleDelete = () => {
-    timerAudio.stop();
+    timerAudio.stop(timer.id);
     deleteTimer(timer.id);
   };
 
