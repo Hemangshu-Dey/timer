@@ -9,7 +9,6 @@ import { TimerAudio } from "../utils/audio";
 import { TimerControls } from "./TimerControls";
 import { TimerProgress } from "./TimerProgress";
 import { Button } from "./Buttons";
-
 interface TimerItemProps {
   timer: Timer;
 }
@@ -21,6 +20,20 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
   const intervalRef = useRef<number | null>(null);
   const timerAudio = TimerAudio.getInstance();
   const hasEndedRef = useRef(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkIsMobile();
+
+    window.addEventListener("resize", checkIsMobile);
+
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, []);
+
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = window.setInterval(() => {
@@ -31,6 +44,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
 
             toast.success(`Timer "${timer.title}" has ended!`, {
               duration: Infinity,
+              position: isMobile ? "bottom-center" : "top-right",
               action: {
                 label: "Dismiss",
                 onClick: () => {
@@ -51,7 +65,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, timer.title, timer.id, timerAudio]);
+  }, [isRunning, timer.title, timer.id, timerAudio, isMobile]);
 
   useEffect(() => {
     setRemainingTime(timer.remainingTime);
@@ -65,12 +79,10 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
     restartTimer(timer.id);
     timerAudio.stop(timer.id);
   };
-
   const handleDelete = () => {
     timerAudio.stop(timer.id);
     deleteTimer(timer.id);
   };
-
   const handleToggle = () => {
     if (remainingTime <= 0) {
       hasEndedRef.current = false;
@@ -78,12 +90,10 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
     }
     setIsRunning((prev) => !prev);
   };
-
   const progress = Math.max(
     0,
     Math.min(100, (remainingTime / timer.duration) * 100)
   );
-
   return (
     <>
       <div className="relative p-6 overflow-hidden transition-transform bg-white shadow-lg rounded-xl hover:scale-102">
@@ -128,9 +138,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
             <div className="mb-4 font-mono text-4xl font-bold text-gray-800">
               {formatTime(remainingTime)}
             </div>
-
             <TimerProgress progress={progress} />
-
             <TimerControls
               isRunning={isRunning}
               remainingTime={remainingTime}
@@ -141,7 +149,6 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
           </div>
         </div>
       </div>
-
       <TimerModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
