@@ -1,8 +1,7 @@
 export class TimerAudio {
   private static instance: TimerAudio;
   private audioContexts: Map<string, AudioContext> = new Map();
-  private oscillators: Map<string, OscillatorNode> = new Map();
-  private gainNodes: Map<string, GainNode> = new Map();
+  private oscillators: Map<string, { stop: () => void }> = new Map();
 
   private constructor() {}
 
@@ -25,62 +24,33 @@ export class TimerAudio {
     }
   }
 
-  async play(timerId: string): Promise<void> {
+  async playLoop(timerId: string, audioUrl: string): Promise<void> {
     try {
       await this.initializeAudioContext(timerId);
 
       const audioContext = this.audioContexts.get(timerId)!;
 
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      const response = await fetch(audioUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
+      const playSound = () => {
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
 
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(
-        0.5,
-        audioContext.currentTime + 0.01
-      );
-      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+        source.start(audioContext.currentTime);
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+        source.onended = () => {
+          source.disconnect();
+        };
+      };
 
-      this.oscillators.set(timerId, oscillator);
-      this.gainNodes.set(timerId, gainNode);
+      const intervalId = setInterval(() => {
+        playSound();
+      }, 1000);
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
-
-      setTimeout(() => {
-        this.cleanup(timerId);
-      }, 500);
-    } catch (error) {
-      console.error(`Failed to play audio for timer ${timerId}:`, error);
-    }
-  }
-
-  async playLoop(timerId: string): Promise<void> {
-    try {
-      await this.initializeAudioContext(timerId);
-
-      const audioContext = this.audioContexts.get(timerId)!;
-
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-
-      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      this.oscillators.set(timerId, oscillator);
-      this.gainNodes.set(timerId, gainNode);
-
-      oscillator.start();
+      this.oscillators.set(timerId, { stop: () => clearInterval(intervalId) });
     } catch (error) {
       console.error(
         `Failed to play looping audio for timer ${timerId}:`,
@@ -94,19 +64,12 @@ export class TimerAudio {
   }
 
   private cleanup(timerId: string): void {
-    const oscillator = this.oscillators.get(timerId);
-    const gainNode = this.gainNodes.get(timerId);
+    const intervalData = this.oscillators.get(timerId);
     const audioContext = this.audioContexts.get(timerId);
 
-    if (oscillator) {
-      oscillator.stop();
-      oscillator.disconnect();
+    if (intervalData) {
+      intervalData.stop(); // Clear the interval
       this.oscillators.delete(timerId);
-    }
-
-    if (gainNode) {
-      gainNode.disconnect();
-      this.gainNodes.delete(timerId);
     }
 
     if (audioContext) {
