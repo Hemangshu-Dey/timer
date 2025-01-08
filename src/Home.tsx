@@ -17,9 +17,8 @@ function Home() {
             <h1 className="text-2xl font-bold text-gray-900">Timer App</h1>
           </div>
           <Button
+            variant="primary"
             onClick={() => setIsModalOpen(true)}
-            size="lg"
-            className="flex items-center gap-2 shadow-md hover:shadow-lg"
           >
             <Plus className="w-5 h-5" />
             Add Timer

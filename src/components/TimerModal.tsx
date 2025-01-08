@@ -259,10 +259,10 @@ export const TimerModal: React.FC<TimerModalProps> = ({
               )}
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="secondary" onClick={handleClose}>
+            <Button variant="secondary" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit">
+            <Button variant="primary">
               {isEditMode ? "Save Changes" : "Add Timer"}
             </Button>
           </div>
