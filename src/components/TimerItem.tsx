@@ -115,21 +115,21 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
               <Button
                 variant="icon"
                 onClick={() => setIsEditModalOpen(true)}
-                title="Edit Timer"
+                label="Edit Timer"
               >
                 <Pencil className="w-5 h-5 text-blue-500" />
               </Button>
               <Button
                 variant="icon"
                 onClick={handleRestart}
-                title="Restart Timer"
+                label="Restart Timer"
               >
                 <RotateCcw className="w-5 h-5 text-blue-500" />
               </Button>
               <Button
                 variant="icon"
                 onClick={handleDelete}
-                title="Delete Timer"
+                label="Delete Timer"
               >
                 <Trash2 className="w-5 h-5 text-red-500" />
               </Button>
