@@ -155,6 +155,7 @@ export const TimerItem: React.FC<TimerItemProps> = ({ timer }) => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         timer={timer}
+        isEditMode={!!timer}
       />
     </>
   );

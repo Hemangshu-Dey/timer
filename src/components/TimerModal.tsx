@@ -10,6 +10,7 @@ interface TimerModalProps {
   isOpen: boolean;
   onClose: () => void;
   timer?: Timer;
+  isEditMode?: boolean;
 }
 
 const MOBILE_BREAKPOINT = 768;
@@ -18,23 +19,24 @@ export const TimerModal: React.FC<TimerModalProps> = ({
   isOpen,
   onClose,
   timer,
+  isEditMode,
 }) => {
-  const isEditMode = !!timer;
-  const [title, setTitle] = useState(timer?.title || "");
-  const [description, setDescription] = useState(timer?.description || "");
-  const [hours, setHours] = useState(
-    timer ? Math.floor(timer.duration / 3600) : 0
-  );
-  const [minutes, setMinutes] = useState(
-    timer ? Math.floor((timer.duration % 3600) / 60) : 0
-  );
-  const [seconds, setSeconds] = useState(timer ? timer.duration % 60 : 0);
+
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
   const [touched, setTouched] = useState({
     title: false,
     hours: false,
     minutes: false,
     seconds: false,
   });
+
   const [toastPosition, setToastPosition] =
     useState<ToasterProps["position"]>("top-right");
 
@@ -46,84 +48,78 @@ export const TimerModal: React.FC<TimerModalProps> = ({
         window.innerWidth < MOBILE_BREAKPOINT ? "bottom-center" : "top-right"
       );
     };
-
     handleResize();
-
     window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
-    if (isOpen && timer) {
-      setTitle(timer.title);
-      setDescription(timer.description);
-      setHours(Math.floor(timer.duration / 3600));
-      setMinutes(Math.floor((timer.duration % 3600) / 60));
-      setSeconds(timer.duration % 60);
-    } else if (isOpen) {
-      setTitle("");
-      setDescription("");
-      setHours(0);
-      setMinutes(0);
-      setSeconds(0);
+    if (isOpen) {
+      setForm({
+        title: timer?.title || "",
+        description: timer?.description || "",
+        hours: timer ? Math.floor(timer.duration / 3600) : 0,
+        minutes: timer ? Math.floor((timer.duration % 3600) / 60) : 0,
+        seconds: timer ? timer.duration % 60 : 0,
+      });
+      setTouched({
+        title: false,
+        hours: false,
+        minutes: false,
+        seconds: false,
+      });
     }
-    setTouched({
-      title: false,
-      hours: false,
-      minutes: false,
-      seconds: false,
-    });
   }, [isOpen, timer]);
 
-  if (!isOpen) return null;
+  const handleFieldChange = (field: string, value: string | number) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
 
   const showError = (message: string) => {
-    toast.error(message, {
-      position: toastPosition,
-    });
+    toast.error(message, { position: toastPosition });
+  };
+
+  const validateFields = () => {
+    const isTitleValid =
+      form.title.trim().length > 0 && form.title.length <= 50;
+    const isTimeValid = form.hours > 0 || form.minutes > 0 || form.seconds > 0;
+    return { isTitleValid, isTimeValid };
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const { isTitleValid, isTimeValid } = validateFields();
     setTouched({
       title: true,
       hours: true,
       minutes: true,
       seconds: true,
     });
-    const isTimeValid = hours > 0 || minutes > 0 || seconds > 0;
-    const isTitleValid = title.trim().length > 0 && title.length <= 50;
 
     if (!isTitleValid || !isTimeValid) {
-      if (!isTitleValid) {
+      if (!isTitleValid)
         showError("Please enter a valid title (1-50 characters)");
-      }
-      if (!isTimeValid) {
-        showError("Please set a duration greater than 0");
-      }
+      if (!isTimeValid) showError("Please set a duration greater than 0");
       return;
     }
 
-    if (!validateTimerForm({ title, description, hours, minutes, seconds })) {
+    if (!validateTimerForm(form)) {
       showError("Please check all fields and try again");
       return;
     }
 
-    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    const totalSeconds = form.hours * 3600 + form.minutes * 60 + form.seconds;
+
     if (isEditMode && timer) {
       editTimer(timer.id, {
-        title: title.trim(),
-        description: description.trim(),
+        ...form,
         duration: totalSeconds,
       });
     } else {
       addTimer({
-        title: title.trim(),
-        description: description.trim(),
+        ...form,
         duration: totalSeconds,
         remainingTime: totalSeconds,
         isRunning: false,
@@ -131,17 +127,11 @@ export const TimerModal: React.FC<TimerModalProps> = ({
     }
     onClose();
   };
-  const handleClose = () => {
-    onClose();
-    setTouched({
-      title: false,
-      hours: false,
-      minutes: false,
-      seconds: false,
-    });
-  };
-  const isTimeValid = hours > 0 || minutes > 0 || seconds > 0;
-  const isTitleValid = title.trim().length > 0 && title.length <= 50;
+
+  if (!isOpen) return null;
+
+  const { isTitleValid, isTimeValid } = validateFields();
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
@@ -152,7 +142,7 @@ export const TimerModal: React.FC<TimerModalProps> = ({
               {isEditMode ? "Edit Timer" : "Add New Timer"}
             </h2>
           </div>
-          <Button variant="icon" onClick={handleClose}>
+          <Button variant="icon" onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
         </div>
@@ -163,9 +153,8 @@ export const TimerModal: React.FC<TimerModalProps> = ({
             </label>
             <input
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={() => setTouched({ ...touched, title: true })}
+              value={form.title}
+              onChange={(e) => handleFieldChange("title", e.target.value)}
               maxLength={50}
               className={`w-full px-3 py-2 border-2 rounded-md ${
                 touched.title && !isTitleValid
@@ -180,7 +169,7 @@ export const TimerModal: React.FC<TimerModalProps> = ({
               </p>
             )}
             <p className="mt-1 text-sm text-gray-500">
-              {title.length}/50 characters
+              {form.title.length}/50 characters
             </p>
           </div>
           <div>
@@ -188,15 +177,15 @@ export const TimerModal: React.FC<TimerModalProps> = ({
               Description
             </label>
             <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={form.description}
+              onChange={(e) => handleFieldChange("description", e.target.value)}
               rows={3}
               className="w-full px-3 py-2 border-2 border-gray-200 rounded-md"
               placeholder="Enter timer description (optional)"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
               Duration <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-3 gap-4">
@@ -208,9 +197,12 @@ export const TimerModal: React.FC<TimerModalProps> = ({
                   type="number"
                   min="0"
                   max="23"
-                  value={hours}
+                  value={form.hours}
                   onChange={(e) =>
-                    setHours(Math.min(23, parseInt(e.target.value) || 0))
+                    handleFieldChange(
+                      "hours",
+                      Math.min(23, parseInt(e.target.value) || 0)
+                    )
                   }
                   onBlur={() => setTouched({ ...touched, hours: true })}
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
@@ -224,9 +216,12 @@ export const TimerModal: React.FC<TimerModalProps> = ({
                   type="number"
                   min="0"
                   max="59"
-                  value={minutes}
+                  value={form.minutes}
                   onChange={(e) =>
-                    setMinutes(Math.min(59, parseInt(e.target.value) || 0))
+                    handleFieldChange(
+                      "minutes",
+                      Math.min(59, parseInt(e.target.value) || 0)
+                    )
                   }
                   onBlur={() => setTouched({ ...touched, minutes: true })}
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
@@ -240,12 +235,15 @@ export const TimerModal: React.FC<TimerModalProps> = ({
                   type="number"
                   min="0"
                   max="59"
-                  value={seconds}
+                  value={form.seconds}
                   onChange={(e) =>
-                    setSeconds(Math.min(59, parseInt(e.target.value) || 0))
+                    handleFieldChange(
+                      "seconds",
+                      Math.min(59, parseInt(e.target.value) || 0)
+                    )
                   }
                   onBlur={() => setTouched({ ...touched, seconds: true })}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&:--webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
                 />
               </div>
             </div>
@@ -259,7 +257,7 @@ export const TimerModal: React.FC<TimerModalProps> = ({
               )}
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="secondary" onClick={handleClose}>
+            <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>
             <Button variant="primary">
