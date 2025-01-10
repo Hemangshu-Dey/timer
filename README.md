@@ -2,7 +2,17 @@
 
 This Timer App is a React-based project enhanced with Vite, Tailwind CSS. The app allows users to manage multiple timers simultaneously, with added features like snack bar notifications, validation and persistent data storage.
 
+## **Application Screenshots**
 
+```bash
+   Desktop View
+```
+![Desktop](./public/images/desktop.png)
+```bash
+   Mobile View
+```
+![Desktop](./public/images/mobile.png)
+---
 
 ## **Key Features**
 - Add multiple timers simultaneously
@@ -26,7 +36,8 @@ This Timer App is a React-based project enhanced with Vite, Tailwind CSS. The ap
 
 1. Clone the repository:  
    ```bash
-   git clone git@github.com:Hemangshu-Dey/timer.git
+   git clone https://github.com/Hemangshu-Dey/timer.git
+   cd timer
    ```
 
 2. Install dependencies:  
@@ -40,17 +51,7 @@ This Timer App is a React-based project enhanced with Vite, Tailwind CSS. The ap
    ```
 ---
 
-## **Application Screenshots**
 
-```bash
-   Desktop View
-```
-![Desktop](./public/images/desktop.png)
-```bash
-   Mobile View
-```
-![Desktop](./public/images/mobile.png)
----
 ## **Deployment Link**
 - You can find the deployed applicaion in the below link
 
