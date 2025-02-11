@@ -21,7 +21,6 @@ export const TimerModal: React.FC<TimerModalProps> = ({
   timer,
   isEditMode,
 }) => {
-
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -197,14 +196,16 @@ export const TimerModal: React.FC<TimerModalProps> = ({
                   type="number"
                   min="0"
                   max="23"
-                  value={form.hours}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      "hours",
-                      Math.min(23, parseInt(e.target.value) || 0)
-                    )
-                  }
-                  onBlur={() => setTouched({ ...touched, hours: true })}
+                  placeholder="0"
+                  value={form.hours === 0 ? "" : form.hours}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0;
+                    if (value > 23) {
+                      toast.warning("Hours cannot be greater than 23!");
+                    }
+                    handleFieldChange("hours", Math.min(23, value));
+                  }}
+                  onBlur={() => setTouched({ ...touched, minutes: true })}
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
                 />
               </div>
@@ -216,13 +217,15 @@ export const TimerModal: React.FC<TimerModalProps> = ({
                   type="number"
                   min="0"
                   max="59"
-                  value={form.minutes}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      "minutes",
-                      Math.min(59, parseInt(e.target.value) || 0)
-                    )
-                  }
+                  placeholder="0"
+                  value={form.minutes === 0 ? "" : form.minutes}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0;
+                    if (value > 59) {
+                      toast.warning("Minutes cannot be greater than 59!");
+                    }
+                    handleFieldChange("minutes", Math.min(59, value));
+                  }}
                   onBlur={() => setTouched({ ...touched, minutes: true })}
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
                 />
@@ -235,14 +238,16 @@ export const TimerModal: React.FC<TimerModalProps> = ({
                   type="number"
                   min="0"
                   max="59"
-                  value={form.seconds}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      "seconds",
-                      Math.min(59, parseInt(e.target.value) || 0)
-                    )
-                  }
-                  onBlur={() => setTouched({ ...touched, seconds: true })}
+                  placeholder="0"
+                  value={form.seconds === 0 ? "" : form.seconds}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0;
+                    if (value > 59) {
+                      toast.warning("Seconds cannot be greater than 59!");
+                    }
+                    handleFieldChange("seconds", Math.min(59, value));
+                  }}
+                  onBlur={() => setTouched({ ...touched, minutes: true })}
                   className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
                 />
               </div>
