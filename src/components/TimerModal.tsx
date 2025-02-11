@@ -5,6 +5,7 @@ import { validateTimerForm } from "../utils/validation";
 import { Timer } from "../types/timer";
 import { Button } from "./Buttons";
 import { toast, ToasterProps } from "sonner";
+import TimeInput from "./TimeInput";
 
 interface TimerModalProps {
   isOpen: boolean;
@@ -21,7 +22,6 @@ export const TimerModal: React.FC<TimerModalProps> = ({
   timer,
   isEditMode,
 }) => {
-
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -30,7 +30,7 @@ export const TimerModal: React.FC<TimerModalProps> = ({
     seconds: 0,
   });
 
-  const [touched, setTouched] = useState({
+  const [inputTouched, setinputTouched] = useState({
     title: false,
     hours: false,
     minutes: false,
@@ -62,7 +62,7 @@ export const TimerModal: React.FC<TimerModalProps> = ({
         minutes: timer ? Math.floor((timer.duration % 3600) / 60) : 0,
         seconds: timer ? timer.duration % 60 : 0,
       });
-      setTouched({
+      setinputTouched({
         title: false,
         hours: false,
         minutes: false,
@@ -73,7 +73,7 @@ export const TimerModal: React.FC<TimerModalProps> = ({
 
   const handleFieldChange = (field: string, value: string | number) => {
     setForm((prev) => ({ ...prev, [field]: value }));
-    setTouched((prev) => ({ ...prev, [field]: true }));
+    setinputTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   const showError = (message: string) => {
@@ -91,7 +91,7 @@ export const TimerModal: React.FC<TimerModalProps> = ({
     e.preventDefault();
 
     const { isTitleValid, isTimeValid } = validateFields();
-    setTouched({
+    setinputTouched({
       title: true,
       hours: true,
       minutes: true,
@@ -157,13 +157,13 @@ export const TimerModal: React.FC<TimerModalProps> = ({
               onChange={(e) => handleFieldChange("title", e.target.value)}
               maxLength={50}
               className={`w-full px-3 py-2 border-2 rounded-md ${
-                touched.title && !isTitleValid
+                inputTouched.title && !isTitleValid
                   ? "border-red-500"
                   : "border-gray-200"
               }`}
               placeholder="Enter timer title"
             />
-            {touched.title && !isTitleValid && (
+            {inputTouched.title && !isTitleValid && (
               <p className="mt-1 text-sm text-red-500">
                 Title is required and must be less than 50 characters
               </p>
@@ -189,67 +189,40 @@ export const TimerModal: React.FC<TimerModalProps> = ({
               Duration <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Hours
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="23"
-                  value={form.hours}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      "hours",
-                      Math.min(23, parseInt(e.target.value) || 0)
-                    )
-                  }
-                  onBlur={() => setTouched({ ...touched, hours: true })}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Minutes
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={form.minutes}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      "minutes",
-                      Math.min(59, parseInt(e.target.value) || 0)
-                    )
-                  }
-                  onBlur={() => setTouched({ ...touched, minutes: true })}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Seconds
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={form.seconds}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      "seconds",
-                      Math.min(59, parseInt(e.target.value) || 0)
-                    )
-                  }
-                  onBlur={() => setTouched({ ...touched, seconds: true })}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full px-3 py-2 border-2 border-gray-200 rounded-md"
-                />
-              </div>
+              <TimeInput
+                label="Hours"
+                value={form.hours}
+                min={0}
+                max={23}
+                onChange={(val: number) => handleFieldChange("hours", val)}
+                onBlur={() => setinputTouched({ ...inputTouched, hours: true })}
+              />
+
+              <TimeInput
+                label="Minutes"
+                value={form.minutes}
+                min={0}
+                max={59}
+                onChange={(val: number) => handleFieldChange("minutes", val)}
+                onBlur={() =>
+                  setinputTouched({ ...inputTouched, minutes: true })
+                }
+              />
+
+              <TimeInput
+                label="Seconds"
+                value={form.seconds}
+                min={0}
+                max={59}
+                onChange={(val: number) => handleFieldChange("seconds", val)}
+                onBlur={() =>
+                  setinputTouched({ ...inputTouched, seconds: true })
+                }
+              />
             </div>
-            {touched.hours &&
-              touched.minutes &&
-              touched.seconds &&
+            {inputTouched.hours &&
+              inputTouched.minutes &&
+              inputTouched.seconds &&
               !isTimeValid && (
                 <p className="mt-2 text-sm text-red-500">
                   Please set a duration greater than 0
